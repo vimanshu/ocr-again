@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <!-- copyright vimanshu chandra @ codesvim@gmail.com-->
+    <title>FREE ONLINE OCR TOOL</title>
+</head>
+<body>
+<div class="container" style="background-color:lavenderblush">
+    <div class="jumbotron">
+        <h1 > FREE ONLINE OCR TOOL</h1>
+        <p style="font-size: 22pt">Extract text from images for free.</p>
+    </div>
+    <div class="information_for_client">
+        <h4 style="color: #ce5c5c"> Step 1: Upload an image</h4>
+        <br>
+        <h4 style="color: #ce5c5c">Step 2: Click on Extract Text</h4>
+
+    </div>
+    <br>
+<div class="image upload">
+    <label for="image_file" style="font-size: 14pt">Select an Image</label>
+    <input class="btn btn-warning" type="file" id="image_file" name="myfile" multiple>
+    <br>
+    <button class="btn btn-lg btn-success" onclick="performOCR()"> Extract Text </button>
+
+</div>
+    <br>
+    <hr style="width:100%; text-align:left;margin-left:0">
+    <hr style="width:100%; text-align:left;margin-left:0">
+    <div id="bulk_results" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-gap: 10px"></div>
+    <script>
+    function performOCR() {
+        var files = document.getElementById("image_file").files
+        var formData = new FormData();
+        var endpoint = '/extract_text';
+        if (files.length == 1) {
+            formData.append('image', files[0])
+        }
+        else{
+            for(var i = 0; i<files.length; i++){
+                formData.append('image'+i.toString(),files[i])
+            }
+            endpoint = '/bulk_extract_text';
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: endpoint,
+            data: formData,
+            contentType: false,
+            cache:false,
+            processData: false,
+            success: function(data){
+                if (endpoint == '/extract_text'){
+                    swal("Converted text", data.text);
+                }
+                else {
+                    swal("Request received", "converted files will start showing up at the bottom soon.")
+                    getConvertedFiles(data.task_id, data.num_files);
+                }
+            }
+        });
+    }
+
+
+    function getConvertedFiles(taskID, numFiles) {
+    var checker = setInterval(function(){
+      $.ajax({
+          type: 'GET',
+          url: '/bulk_output/' + taskID,
+          contentType: false,
+          cache: false,
+          processData: false,
+          success: function(data) {
+            wrapper = document.getElementById("bulk_results")
+            for (var key in data.output) {
+              var element = document.createElement("button");
+              element.setAttribute("class", "btn btn-primary")
+              element.setAttribute("info", data.output[key])
+              element.setAttribute("id", key)
+              element.setAttribute("onclick", "displayText(this.id)")
+              element.innerHTML = key
+              wrapper.appendChild(element)
+            }
+            if (Object.keys(data.output).length == numFiles) {
+                stopChecker()
+            }
+          }
+      });
+    }, 3000);
+
+    function stopChecker() {
+      clearInterval(checker)
+    }
+  }
+
+function displayText(id) {
+  swal("Converted Text", document.getElementById(id).getAttribute("info"))
+}
+</script>
+</div>
+</body>
+<!--javascript begins... -->
+
+</html>
