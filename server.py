@@ -4,6 +4,7 @@ from fastapi import FastAPI,Request, UploadFile, File,BackgroundTasks
 from fastapi.templating import Jinja2Templates
 import ocr
 import uuid
+import json
 app = FastAPI()
 
 templates = Jinja2Templates(directory='templates')
